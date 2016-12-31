@@ -42,6 +42,18 @@ BufferingPipeStream test wrote 65536000000 bytes in 1000000 iterations.
 BufferingPipeStream test read 65536000000 bytes in 6.497 seconds.
 ```
 
+Slow run on Mono on Windows 10 VM
+---------------------------------
+```
+>"C:\Program Files\Mono\bin\mono.exe" PipeBench.exe
+BlockingPipeStream test starting.
+BlockingPipeStream test wrote 65536000000 bytes in 1000000 iterations.
+BlockingPipeStream test read 65536000000 bytes in 15.994 seconds.
+BufferingPipeStream test starting.
+BufferingPipeStream test wrote 65536000000 bytes in 1000000 iterations.
+BufferingPipeStream test read 65536000000 bytes in 23.978 seconds.
+```
+
 Fast run on .NET 4 on Windows 10 VM
 -----------------------------------
 ```
