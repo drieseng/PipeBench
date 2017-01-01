@@ -6,28 +6,137 @@ namespace Renci.SshNet.Common
 {
     internal class LinkedListPipeStream : Stream
     {
+        private readonly object _lock;
         private PipeEntry _first;
         private PipeEntry _last;
         private bool _isDisposed;
-        private readonly object _lock;
+        private long _position;
+        private long _length;
 
+        /// <summary>
+        /// Initializes a new <see cref="LinkedListPipeStream"/> instance.
+        /// </summary>
         public LinkedListPipeStream()
         {
             _lock = new object();
         }
 
+        /// <summary>
+        /// Overrides the <see cref="Stream.Flush()"/> so that no action is performed.
+        /// </summary>
+        /// <remarks>
+        /// Because any data written to a <see cref="LinkedListPipeStream"/> is written to a memory
+        /// buffer, this method is redundant.
+        /// </remarks>
         public override void Flush()
         {
         }
-
+        
         public override long Seek(long offset, SeekOrigin origin)
         {
-            throw new NotSupportedException();
+            if (_isDisposed)
+                throw CreateObjectDisposedException();
+
+            if (offset == 0)
+                return _position;
+
+            lock (_lock)
+            {
+                switch (origin)
+                {
+                    case SeekOrigin.Begin:
+                        {
+                            if (offset < _position)
+                                throw new ArgumentOutOfRangeException("Cannot be less than the current position.", nameof(offset));
+                            if (offset > _length)
+                                throw new ArgumentOutOfRangeException("Cannot seek beyond the end of the stream.", nameof(offset));
+
+                            var bytesToSkipForward = offset - _position;
+                            InternalSeekForward(bytesToSkipForward);
+                            _position += bytesToSkipForward;
+                        }
+                        break;
+                    case SeekOrigin.Current:
+                        {
+                            if (offset < 0)
+                                throw new ArgumentOutOfRangeException("Cannot move backward.", nameof(offset));
+                            if (offset > (_length - _position))
+                                throw new ArgumentOutOfRangeException("Cannot seek beyond the end of the stream.", nameof(offset));
+
+                            InternalSeekForward(offset);
+                            _position += offset;
+                        }
+                        break;
+                    case SeekOrigin.End:
+                        {
+                            if (offset > 0)
+                                throw new ArgumentOutOfRangeException("Cannot seek beyond the end of the stream.", nameof(offset));
+                            if (_length + offset < _position)
+                                throw new ArgumentOutOfRangeException("Cannot move backward.", nameof(offset));
+
+                            var bytesToSkipForward = _length + offset - _position;
+                            InternalSeekForward(bytesToSkipForward);
+                            _position += bytesToSkipForward;
+                        }
+                        break;
+                }
+
+                return _position;
+            }
+        }
+
+        private void InternalSeekForward(long offset)
+        {
+            while (offset > 0)
+            {
+                var remainingBytesInCurrentPipe = _first.Length - _first.Position;
+                if (remainingBytesInCurrentPipe >= offset)
+                {
+                    _first.Position += (int)offset;
+                    offset = 0;
+                }
+                else
+                {
+                    _first = _first.Next;
+                    offset -= remainingBytesInCurrentPipe;
+                }
+            }
         }
 
         public override void SetLength(long value)
         {
-            throw new NotSupportedException();
+            if (value < 0)
+                throw new ArgumentOutOfRangeException("Cannot be negative.", nameof(value));
+            if (_isDisposed)
+                throw CreateObjectDisposedException();
+
+            lock (_lock)
+            {
+                if (value < _position)
+                    throw new ArgumentOutOfRangeException("Cannot be less that the current position.", nameof(value));
+
+                if (value > _length)
+                    throw new ArgumentOutOfRangeException("Cannot be greater than the current length.", nameof(value));
+
+                var bytesToSkip = value - _position;
+                while (bytesToSkip > 0)
+                {
+                    var remainingBytesInCurrentPipe = _first.Length - _first.Position;
+                    if (remainingBytesInCurrentPipe > bytesToSkip)
+                    {
+                        _first.Length = _first.Position + (int)bytesToSkip;
+                        _first.Next = null;
+                        bytesToSkip = 0;
+                    }
+                    else
+                    {
+                        _first = _first.Next;
+                        bytesToSkip -= remainingBytesInCurrentPipe;
+                    }
+                }
+
+                _length = value;
+            }
         }
 
         public override int Read(byte[] buffer, int offset, int count)
@@ -62,6 +171,7 @@ namespace Renci.SshNet.Common
                     count -= bytesRead;
                     totalBytesRead += bytesRead;
                     offset += bytesRead;
+                    _position += bytesRead;
                 }
 
                 return totalBytesRead;
@@ -96,6 +206,8 @@ namespace Renci.SshNet.Common
                     _first = _last;
                 }
 
+                _length += count;
+
                 Monitor.Pulse(_lock);
             }
         }
@@ -107,23 +219,33 @@ namespace Renci.SshNet.Common
 
         public override bool CanSeek
         {
-            get { return false; }
+            get { return !_isDisposed; }
         }
 
         public override bool CanWrite
         {
-            get { return true; }
+            get { return !_isDisposed; }
         }
 
         public override long Length
         {
             get
             {
-                throw new NotSupportedException();
+                return _length;
             }
         }
 
-        public override long Position { get; set; }
+        public override long Position
+        {
+            get
+            {
+                return _position;
+            }
+            set
+            {
+                Seek(value, SeekOrigin.Begin);
+            }
+        }
 
         /// <summary>
         /// Releases the unmanaged resources used by the Stream and optionally releases the managed resources.
@@ -155,13 +277,14 @@ namespace Renci.SshNet.Common
     internal class PipeEntry
     {
         private readonly byte[] _data;
+        private int _offset;
         public int Position;
         public int Length;
 
         public PipeEntry(byte[] data, int offset, int count)
         {
             _data = data;
-            Position = offset;
+            _offset = offset;
             Length = count;
         }
 
@@ -173,7 +296,7 @@ namespace Renci.SshNet.Common
             if (count > bytesAvailable)
                 bytesToCopy = bytesAvailable;
 
-            Buffer.BlockCopy(_data, Position, dst, offset, bytesToCopy);
+            Buffer.BlockCopy(_data, _offset + Position, dst, offset, bytesToCopy);
             Position += bytesToCopy;
             return bytesToCopy;
         }
