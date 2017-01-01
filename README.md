@@ -22,10 +22,14 @@ Copyright (C) 2002-2014 Novell, Inc, Xamarin Inc and Contributors. www.mono-proj
 $ mono bin/Release/PipeBench.exe 
 BlockingPipeStream test starting.
 BlockingPipeStream test wrote 65536000000 bytes in 1000000 iterations.
-BlockingPipeStream test read 65536000000 bytes in 10.079 seconds.
+BlockingPipeStream test read 65536000000 bytes in 10.291 seconds.
 BufferingPipeStream test starting.
 BufferingPipeStream test wrote 65536000000 bytes in 1000000 iterations.
-BufferingPipeStream test read 65536000000 bytes in 21.518 seconds.
+BufferingPipeStream test read 65536000000 bytes in 22.026 seconds.
+CompatBufferingPipeStream test starting.
+CompatBufferingPipeStream test wrote 65536000000 bytes in 1000000 iterations.
+CompatBufferingPipeStream test read 65536000000 bytes in 22.903 seconds.
+
 ```
 
 Fast run on .NET Core
@@ -36,10 +40,14 @@ $ dotnet --version
 $ dotnet bin/Release/netcoreapp1.1/PipeBench.dll 
 BlockingPipeStream test starting.
 BlockingPipeStream test wrote 65536000000 bytes in 1000000 iterations.
-BlockingPipeStream test read 65536000000 bytes in 8.511 seconds.
+BlockingPipeStream test read 65536000000 bytes in 7.848 seconds.
 BufferingPipeStream test starting.
 BufferingPipeStream test wrote 65536000000 bytes in 1000000 iterations.
-BufferingPipeStream test read 65536000000 bytes in 6.497 seconds.
+BufferingPipeStream test read 65536000000 bytes in 7.723 seconds.
+CompatBufferingPipeStream test starting.
+CompatBufferingPipeStream test wrote 65536000000 bytes in 1000000 iterations.
+CompatBufferingPipeStream test read 65536000000 bytes in 6.986 seconds.
+
 ```
 
 Slow run on Mono on Windows 10 VM
@@ -48,10 +56,13 @@ Slow run on Mono on Windows 10 VM
 >"C:\Program Files\Mono\bin\mono.exe" PipeBench.exe
 BlockingPipeStream test starting.
 BlockingPipeStream test wrote 65536000000 bytes in 1000000 iterations.
-BlockingPipeStream test read 65536000000 bytes in 15.994 seconds.
+BlockingPipeStream test read 65536000000 bytes in 15.778 seconds.
 BufferingPipeStream test starting.
 BufferingPipeStream test wrote 65536000000 bytes in 1000000 iterations.
-BufferingPipeStream test read 65536000000 bytes in 23.978 seconds.
+BufferingPipeStream test read 65536000000 bytes in 23.576 seconds.
+CompatBufferingPipeStream test starting.
+CompatBufferingPipeStream test wrote 65536000000 bytes in 1000000 iterations.
+CompatBufferingPipeStream test read 65536000000 bytes in 23.819 seconds.
 ```
 
 Fast run on .NET 4 on Windows 10 VM
@@ -60,8 +71,11 @@ Fast run on .NET 4 on Windows 10 VM
 >PipeBench.exe
 BlockingPipeStream test starting.
 BlockingPipeStream test wrote 65536000000 bytes in 1000000 iterations.
-BlockingPipeStream test read 65536000000 bytes in 12,958 seconds.
+BlockingPipeStream test read 65536000000 bytes in 12,975 seconds.
 BufferingPipeStream test starting.
 BufferingPipeStream test wrote 65536000000 bytes in 1000000 iterations.
-BufferingPipeStream test read 65536000000 bytes in 7,385 seconds.
+BufferingPipeStream test read 65536000000 bytes in 8,244 seconds.
+CompatBufferingPipeStream test starting.
+CompatBufferingPipeStream test wrote 65536000000 bytes in 1000000 iterations.
+CompatBufferingPipeStream test read 65536000000 bytes in 6,93 seconds.
 ```
