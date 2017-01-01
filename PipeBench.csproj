@@ -36,6 +36,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BufferingPipeStream.cs" />
     <Compile Include="BlockingPipeStream.cs" />
+    <Compile Include="CompatBufferingPipeStream.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

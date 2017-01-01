@@ -57,11 +57,9 @@ namespace PipeBench
                 iterations = Int64.Parse(args[0]);
             }
 
-            var blockingPipeStream = new BlockingPipeStream();
-            var bufferingPipeStream = new BufferingPipeStream();
-
-            Test(blockingPipeStream);
-            Test(bufferingPipeStream);
+            Test(new BlockingPipeStream());
+            Test(new BufferingPipeStream());
+            Test(new CompatBufferingPipeStream());
         }
     }
 }
