@@ -60,6 +60,7 @@ namespace PipeBench
             Test(new BlockingPipeStream());
             Test(new BufferingPipeStream());
             Test(new CompatBufferingPipeStream());
+            Test(new LinkedListPipeStream());
         }
     }
 }
