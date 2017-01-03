@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace Renci.SshNet.Common
 {
-    internal class LinkedListPipeStream : Stream
+    public class LinkedListPipeStream : Stream
     {
         private readonly object _lock;
         private PipeEntry _first;
@@ -47,9 +47,9 @@ namespace Renci.SshNet.Common
                     case SeekOrigin.Begin:
                         {
                             if (offset < _position)
-                                throw new ArgumentOutOfRangeException("Cannot be less than the current position.", nameof(offset));
+                                throw new ArgumentOutOfRangeException(nameof(offset), "Cannot be less than the current position.");
                             if (offset > _length)
-                                throw new ArgumentOutOfRangeException("Cannot seek beyond the end of the stream.", nameof(offset));
+                                throw new ArgumentOutOfRangeException(nameof(offset), "Cannot seek beyond the end of the stream.");
 
                             var bytesToSkipForward = offset - _position;
                             InternalSeekForward(bytesToSkipForward);
@@ -59,9 +59,9 @@ namespace Renci.SshNet.Common
                     case SeekOrigin.Current:
                         {
                             if (offset < 0)
-                                throw new ArgumentOutOfRangeException("Cannot move backward.", nameof(offset));
+                                throw new ArgumentOutOfRangeException(nameof(offset), "Cannot move backward.");
                             if (offset > (_length - _position))
-                                throw new ArgumentOutOfRangeException("Cannot seek beyond the end of the stream.", nameof(offset));
+                                throw new ArgumentOutOfRangeException(nameof(offset), "Cannot seek beyond the end of the stream.");
 
                             InternalSeekForward(offset);
                             _position += offset;
@@ -70,9 +70,9 @@ namespace Renci.SshNet.Common
                     case SeekOrigin.End:
                         {
                             if (offset > 0)
-                                throw new ArgumentOutOfRangeException("Cannot seek beyond the end of the stream.", nameof(offset));
+                                throw new ArgumentOutOfRangeException(nameof(offset), "Cannot seek beyond the end of the stream.");
                             if (_length + offset < _position)
-                                throw new ArgumentOutOfRangeException("Cannot move backward.", nameof(offset));
+                                throw new ArgumentOutOfRangeException(nameof(offset), "Cannot move backward.");
 
                             var bytesToSkipForward = _length + offset - _position;
                             InternalSeekForward(bytesToSkipForward);
@@ -114,24 +114,29 @@ namespace Renci.SshNet.Common
             {
                 if (value < _position)
                     throw new ArgumentOutOfRangeException("Cannot be less that the current position.", nameof(value));
-
                 if (value > _length)
                     throw new ArgumentOutOfRangeException("Cannot be greater than the current length.", nameof(value));
 
-                var bytesToSkip = value - _position;
-                while (bytesToSkip > 0)
+                if (value == _length)
+                    return;
+
+                if (value < _length)
                 {
-                    var remainingBytesInCurrentPipe = _first.Length - _first.Position;
-                    if (remainingBytesInCurrentPipe > bytesToSkip)
+                    var bytesToSkip = value - _position;
+                    while (bytesToSkip > 0)
                     {
-                        _first.Length = _first.Position + (int)bytesToSkip;
-                        _first.Next = null;
-                        bytesToSkip = 0;
-                    }
-                    else
-                    {
-                        _first = _first.Next;
-                        bytesToSkip -= remainingBytesInCurrentPipe;
+                        var remainingBytesInCurrentPipe = _first.Length - _first.Position;
+                        if (remainingBytesInCurrentPipe > bytesToSkip)
+                        {
+                            _first.Length = _first.Position + (int)bytesToSkip;
+                            _first.Next = null;
+                            bytesToSkip = 0;
+                        }
+                        else
+                        {
+                            _first = _first.Next;
+                            bytesToSkip -= remainingBytesInCurrentPipe;
+                        }
                     }
                 }
 
